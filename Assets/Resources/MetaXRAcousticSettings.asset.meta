@@ -1,6 +1,7 @@
 fileFormatVersion: 2
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 guid: 108ac1fd553f41b438e3a2367432bbd5
 =======
 guid: 87bc4987071f4264cb6307eb7d2c3b09
@@ -8,6 +9,9 @@ guid: 87bc4987071f4264cb6307eb7d2c3b09
 =======
 guid: 6b0aa2a96e40ce2479996f1a1e56e7f8
 >>>>>>> clay_charry
+=======
+guid: 58071d4f4a4431441abc796116d6400e
+>>>>>>> daniel-ocampo
 NativeFormatImporter:
   externalObjects: {}
   mainObjectFileID: 11400000
