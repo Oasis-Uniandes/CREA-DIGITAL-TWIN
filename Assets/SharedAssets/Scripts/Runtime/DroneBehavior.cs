@@ -24,7 +24,13 @@ public class DroneBehavior : MonoBehaviour
                                       // del trayecto de un punto a otro, la velocidad del dron sera el punto 0 de la curva, y al llegar al destino su velocidad sera el punto 1 de la curva. Por eso, la curva debe siempre
                                       // ser en todo momento mayor que cero, ya que si el dron se detiene en cualquier momento no sera capaz de continuar en la curva y se quedara quieto por siempre.
 
-    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint")]
+    [Tooltip("Curva personalizable para editar la velocidad de rotacion en X del dron. Rango: (0, 10]")]
+    public AnimationCurve RotateXCurve; // Similar a la anterior curva, se cambia en el editor para personalizar la velocidad de rotacion en X. Dominio [0, 1]. La rotacion en X sucede cuando el waypoint objetivo se cambia al proximo en la lista.
+
+    [Tooltip("Curva personalizable para editar la velocidad de rotacion en Y del dron. Rango: (0, 10]")]
+    public AnimationCurve RotateYCurve; // Similar a la anterior curva, se cambia en el editor para personalizar la velocidad de rotacion en Y. Dominio [0, 1]. La rotacion en Y sucede durante el movimiento de un punto al otro.
+
+    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint. Aqui sucede la rotacion en X.")]
     [Range(0.0f, 5.0f)] public float WaitTimeBetweenPoints; 
 
 
