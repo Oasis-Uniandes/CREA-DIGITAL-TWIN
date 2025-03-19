@@ -18,10 +18,21 @@ public class DroneBehavior : MonoBehaviour
     [Tooltip("Repetir vuelo de drón al terminar el recorrido.")]
     public bool LoopTime;
 
-    [Range(0.0f, 5.0f)] public float MoveSpeed; // Velocidad que el dron va a tener moviendose entre cada waypoint.
+    [Tooltip("Curva personalizable para editar la velocidad del dron en su recorrido de un waypoint al proximo. Rango: (0, 10]")]
+    public AnimationCurve SpeedCurve; // Esta es una curva que se puede cambiar en el editor como sea necesario. Su dominio es [0, 1], por lo que cualquier punto fuera de estos no es considerado en la velocidad.
+                                      // Esta determina la velocidad del dron en un solo recorrido de un waypoint a otro, no en el recorrido completo de toda la lista de waypoints. Esto quiere decir que al principio
+                                      // del trayecto de un punto a otro, la velocidad del dron sera el punto 0 de la curva, y al llegar al destino su velocidad sera el punto 1 de la curva. Por eso, la curva debe siempre
+                                      // ser en todo momento mayor que cero, ya que si el dron se detiene en cualquier momento no sera capaz de continuar en la curva y se quedara quieto por siempre.
+
+    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint")]
+    [Range(0.0f, 5.0f)] public float WaitTimeBetweenPoints; 
+
+
     [Range(0.0f, 5.0f)] public float RotateSpeed; // Velocidad de rotacion hacia cada waypoint que el dron tendrá.
 
-
+    private float currentSpeed; // Velocidad actual, proporcional al punto actual de la curva de velocidad.
+    private float waypointProgress; // Progreso del recorrido del anterior waypoint hacia el proximo waypoint, este siendo un valor entre 0 y 1.
+    private Vector3 lastPosition; // Posicion del dron al llegar al anterior waypoint.
     private int nextWaypointIndex; // El indice en el array del próximo waypoint.
     private bool inMovement; // Bool que revisa si el dron esta en movimiento o no; se usa para decidir si ya llegó a su objetivo.
 
@@ -38,30 +49,38 @@ public class DroneBehavior : MonoBehaviour
             transform.position = waypoints[0].transform.position; // La posición inicial del drón siempre será la del primer waypoint, incluso si el drón esta en otro lugar.
             UpdateGoal();
         }
+
     }
 
     // Update is called once per frame
     void Update()
     {
         if (inMovement)
-        {
             MoveDrone();
-            RotateDrone();
-        }
+           
+        RotateDrone();
+        
     }
-
 
     void MoveDrone()
     {
-        Vector3 targetPosition = waypoints[nextWaypointIndex].transform.position;
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, MoveSpeed * Time.deltaTime);
-        if (transform.position == targetPosition)
+        Vector3 targetPosition = waypoints[nextWaypointIndex].transform.position; // Busca la posicion del proximo waypoint
+        waypointProgress = 1 - (Vector3.Distance(transform.position, targetPosition) / Vector3.Distance(lastPosition, targetPosition)); // Usa distancias para calcular cuanto progreso se ha realizado de el recorrido del anterior waypoint al proximo,
+                                                                                                                                        // siendo un valor float entre 0 y 1 (e.g. a la mitad del recorrido, esto sera 0.5).
+
+        currentSpeed = SpeedCurve.Evaluate(waypointProgress); // Sabiendo cuanto progreso se ha hecho de este recorrido, se evalua la velocidad en ese punto en la curva de velocidad.
+
+
+        if (currentSpeed <= 0) // Revisa que la velocidad sea siempre mayor que cero para evitar errores
         {
-            UpdateGoal();
+            Debug.Log($"La velocidad inicial del dron {gameObject.name} en la curva debe ser siempre mayor a cero, se borró su script.");
+            Destroy(this);
         }
 
-        // TODO : Tal vez modificar el movimiento para que sea más suave, ahora mismo esta muy rígido.
+        transform.position = Vector3.MoveTowards(transform.position, targetPosition, currentSpeed * Time.deltaTime); // Se mueve hacia el target considerando la velocidad actual y arreglando el valor para que sea independiente del framerate.
 
+        if (Vector3.Distance(transform.position, targetPosition) < 0.1f) // Aproximo la distancia para evitar cualquier error de comparacion de floats muy extensos.
+             StartCoroutine(WaitForGoalUpdate());   // Si se llego ya al target waypoint, el objetivo se actualiza para el proximo waypoint, o se detiene el recorrido si se acabo la lista y no hay loop time.
     }
 
     void RotateDrone()
@@ -69,20 +88,27 @@ public class DroneBehavior : MonoBehaviour
         // TODO : Rotación de drón hacia el próximo waypoint.
     }
 
+
+    private IEnumerator WaitForGoalUpdate()
+    {
+        inMovement = false;
+        yield return new WaitForSeconds(WaitTimeBetweenPoints);
+        UpdateGoal();
+    }
+
     void UpdateGoal()
     {
         inMovement = true;
+        lastPosition = transform.position;  // Guarda la posicion actual para poder calcular despues la distancia total de un waypoint al proximo
+
         if (nextWaypointIndex + 1 < waypoints.Length)
-        {
             nextWaypointIndex++;
-        } 
+
         else if (waypoints.Length > 1 && LoopTime) 
-        {
             nextWaypointIndex = 0;
-        }
+
         else
-        {
             inMovement = false;
-        }
     }
+
 }
