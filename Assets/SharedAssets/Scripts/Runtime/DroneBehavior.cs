@@ -30,17 +30,18 @@ public class DroneBehavior : MonoBehaviour
     [Tooltip("Curva personalizable para editar la velocidad de rotacion en Y del dron. Rango: (0, 10]")]
     public AnimationCurve RotateYCurve; // Similar a la anterior curva, se cambia en el editor para personalizar la velocidad de rotacion en Y. Dominio [0, 1]. La rotacion en Y sucede durante el movimiento de un punto al otro.
 
+
+    [Header("Other Settings")]
     [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint. Aqui sucede la rotacion en X.")]
     [Range(0.0f, 5.0f)] public float WaitTimeBetweenPoints; 
 
-
-    [Range(0.0f, 5.0f)] public float RotateSpeed; // Velocidad de rotacion hacia cada waypoint que el dron tendrá.
 
     private float currentSpeed; // Velocidad actual, proporcional al punto actual de la curva de velocidad.
     private float waypointProgress; // Progreso del recorrido del anterior waypoint hacia el proximo waypoint, este siendo un valor entre 0 y 1.
     private Vector3 lastPosition; // Posicion del dron al llegar al anterior waypoint.
     private int nextWaypointIndex; // El indice en el array del próximo waypoint.
     private bool inMovement; // Bool que revisa si el dron esta en movimiento o no; se usa para decidir si ya llegó a su objetivo.
+    private bool inRotationX; // Bool que revisa si el dron esta rotando su eje X para apuntar al proximo waypoint.
 
 
     void Awake()
@@ -62,10 +63,13 @@ public class DroneBehavior : MonoBehaviour
     void Update()
     {
         if (inMovement)
+        {
             MoveDrone();
-           
-        RotateDrone();
-        
+            RotateYaxis();
+        }
+
+        if (inRotationX)
+            RotateXaxis();
     }
 
     void MoveDrone()
@@ -89,14 +93,30 @@ public class DroneBehavior : MonoBehaviour
              StartCoroutine(WaitForGoalUpdate());   // Si se llego ya al target waypoint, el objetivo se actualiza para el proximo waypoint, o se detiene el recorrido si se acabo la lista y no hay loop time.
     }
 
-    void RotateDrone()
+    void RotateYaxis()
     {
-        // TODO : Rotación de drón hacia el próximo waypoint.
+        // TODO: Rotación de dron en Y
+    }
+
+    void RotateXaxis()
+    {
+        int test = nextWaypointIndex;
+        Transform target = waypoints[NextWaypoint(test)].transform;
+
+        Vector3 lookPos = target.position - transform.position;
+        lookPos.y = 0;
+        lookPos.z = 0;
+        Quaternion rotation = Quaternion.LookRotation(lookPos);
+        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 5);
+
+        if (Quaternion.Dot(transform.rotation, rotation) <= 0.2)
+            inRotationX = false;
     }
 
 
     private IEnumerator WaitForGoalUpdate()
     {
+        inRotationX = true;
         inMovement = false;
         yield return new WaitForSeconds(WaitTimeBetweenPoints);
         UpdateGoal();
@@ -117,4 +137,14 @@ public class DroneBehavior : MonoBehaviour
             inMovement = false;
     }
 
+    int NextWaypoint(int currentValue)
+    {
+        if (currentValue + 1 < waypoints.Length)
+            currentValue++;
+
+        else if (waypoints.Length > 1 && LoopTime)
+            currentValue = 0;
+        
+        return currentValue;
+    }
 }
