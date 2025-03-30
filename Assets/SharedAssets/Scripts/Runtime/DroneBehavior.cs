@@ -24,11 +24,8 @@ public class DroneBehavior : MonoBehaviour
                                       // del trayecto de un punto a otro, la velocidad del dron sera el punto 0 de la curva, y al llegar al destino su velocidad sera el punto 1 de la curva. Por eso, la curva debe siempre
                                       // ser en todo momento mayor que cero, ya que si el dron se detiene en cualquier momento no sera capaz de continuar en la curva y se quedara quieto por siempre.
 
-    [Tooltip("Curva personalizable para editar la velocidad de rotacion en X del dron. Rango: (0, 10]")]
-    public AnimationCurve RotateXCurve; // Similar a la anterior curva, se cambia en el editor para personalizar la velocidad de rotacion en X. Dominio [0, 1]. La rotacion en X sucede cuando el waypoint objetivo se cambia al proximo en la lista.
-
-    [Tooltip("Curva personalizable para editar la velocidad de rotacion en Y del dron. Rango: (0, 10]")]
-    public AnimationCurve RotateYCurve; // Similar a la anterior curva, se cambia en el editor para personalizar la velocidad de rotacion en Y. Dominio [0, 1]. La rotacion en Y sucede durante el movimiento de un punto al otro.
+    [Tooltip("Velocidad de rotacion para mirar al proximo punto")]
+    [Range(0.0f, 5.0f)] public float RotateSpeed;
 
 
     [Header("Other Settings")]
@@ -41,8 +38,7 @@ public class DroneBehavior : MonoBehaviour
     private Vector3 lastPosition; // Posicion del dron al llegar al anterior waypoint.
     private int nextWaypointIndex; // El indice en el array del próximo waypoint.
     private bool inMovement; // Bool que revisa si el dron esta en movimiento o no; se usa para decidir si ya llegó a su objetivo.
-    private bool inRotationX; // Bool que revisa si el dron esta rotando su eje X para apuntar al proximo waypoint.
-
+    private bool inRotationY; // Bool que revisa si el dron esta rotando su eje X para apuntar al proximo waypoint.
 
     void Awake()
     {
@@ -55,6 +51,12 @@ public class DroneBehavior : MonoBehaviour
         {
             transform.position = waypoints[0].transform.position; // La posición inicial del drón siempre será la del primer waypoint, incluso si el drón esta en otro lugar.
             UpdateGoal();
+            if (waypoints.Length > 1)
+            {
+               // transform.LookAt(waypoints[1].transform);
+               // transform.rotation = new Quaternion(0, transform.rotation.y, 0, transform.rotation.w);
+                inMovement = true;
+            }
         }
 
     }
@@ -65,11 +67,10 @@ public class DroneBehavior : MonoBehaviour
         if (inMovement)
         {
             MoveDrone();
-            RotateYaxis();
         }
 
-        if (inRotationX)
-            RotateXaxis();
+        //if (inRotationY)
+            //RotateYaxis();
     }
 
     void MoveDrone()
@@ -93,58 +94,63 @@ public class DroneBehavior : MonoBehaviour
              StartCoroutine(WaitForGoalUpdate());   // Si se llego ya al target waypoint, el objetivo se actualiza para el proximo waypoint, o se detiene el recorrido si se acabo la lista y no hay loop time.
     }
 
-    void RotateYaxis()
+    /*
+    void RotateYaxis() // TODO: ARREGLAR ESTA FUNCION NO SIRVE AAAAAAAAAA
     {
-        // TODO: Rotación de dron en Y
-    }
+        GameObject nextWaypoint = waypoints[nextWaypointIndex];
+        Transform target = nextWaypoint.transform;
 
-    void RotateXaxis()
-    {
-        int test = nextWaypointIndex;
-        Transform target = waypoints[NextWaypoint(test)].transform;
+        TestWaypointBlocks(nextWaypoint, true); // Se supone que esto deberia mostrar fisicamente el proximo waypoint con un cubo
 
-        Vector3 lookPos = target.position - transform.position;
-        lookPos.y = 0;
+        Vector3 lookPos = target.position - transform.position; // Encuentra el vector que en teoria apuntaria al proximo waypoint
+        lookPos.y = 0; // Solo nos interesa la direccion en X
         lookPos.z = 0;
-        Quaternion rotation = Quaternion.LookRotation(lookPos);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 5);
 
-        if (Quaternion.Dot(transform.rotation, rotation) <= 0.2)
-            inRotationX = false;
+        Quaternion rotation = Quaternion.LookRotation(lookPos); // Nos define la direccion del proximo waypoint como un Quaternion
+        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 2); // Se translada a ese quaternion
+
+        //Debug.Log(Vector3.Dot(lookPos.normalized, transform.forward));
+
+        if (Vector3.Dot(lookPos.normalized, transform.forward) > 0.99) // Revisa si ya llego a la direccion esperada. Por alguna razon con esta configuracion de dron, entre mas se acerca a la rotacion, el producto punto se convierte 1 y no 0,                                                                          probablemente hice algo mal jajan't
+        {
+            TestWaypointBlocks(nextWaypoint, false); // apaga la visualizacion del waypoint actual
+            inRotationY = false;
+        }
     }
-
+    */
 
     private IEnumerator WaitForGoalUpdate()
     {
-        inRotationX = true;
         inMovement = false;
+        bool newUpdate = UpdateGoal();
+        inRotationY = true;
         yield return new WaitForSeconds(WaitTimeBetweenPoints);
-        UpdateGoal();
+        inMovement = newUpdate;
     }
 
-    void UpdateGoal()
+    bool UpdateGoal()
     {
-        inMovement = true;
         lastPosition = transform.position;  // Guarda la posicion actual para poder calcular despues la distancia total de un waypoint al proximo
 
         if (nextWaypointIndex + 1 < waypoints.Length)
             nextWaypointIndex++;
 
-        else if (waypoints.Length > 1 && LoopTime) 
+        else if (waypoints.Length > 1 && LoopTime)
             nextWaypointIndex = 0;
 
         else
+        {
             inMovement = false;
+            return false;
+        }
+
+        return true;
+        
     }
 
-    int NextWaypoint(int currentValue)
+    void TestWaypointBlocks(GameObject waypoint, bool enable)
     {
-        if (currentValue + 1 < waypoints.Length)
-            currentValue++;
-
-        else if (waypoints.Length > 1 && LoopTime)
-            currentValue = 0;
-        
-        return currentValue;
+        if (waypoint.GetComponentInChildren<MeshRenderer>() != null)
+            waypoint.GetComponentInChildren<MeshRenderer>().enabled = enable;
     }
 }
