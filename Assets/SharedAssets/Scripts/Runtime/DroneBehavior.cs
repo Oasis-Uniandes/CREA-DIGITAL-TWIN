@@ -29,7 +29,7 @@ public class DroneBehavior : MonoBehaviour
 
 
     [Header("Other Settings")]
-    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint. Aqui sucede la rotacion en X.")]
+    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint. Aqui sucede la rotacion en Y.")]
     [Range(0.0f, 5.0f)] public float WaitTimeBetweenPoints; 
 
 
