@@ -378,8 +378,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  RotateSpeed: 0
-  WaitTimeBetweenPoints: 0.43
+  RotateSpeed: 0.6
+  WaitTimeBetweenPoints: 0.6
 --- !u!1 &5829878386451271303
 GameObject:
   m_ObjectHideFlags: 0

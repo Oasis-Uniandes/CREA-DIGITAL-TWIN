@@ -5,56 +5,59 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 
-public class DroneBehavior : MonoBehaviour
+public class WaypointMovement : MonoBehaviour
 {
     [Header("Waypoint Settings")]
-    [Tooltip("Lista de objetos hacia donde el drón volará. Idealmente Empty Game Objects.")]
-    [SerializeField] private GameObject[] waypoints; // Array de los waypoints que va a seguir el dron. Debe haber mínimo uno que debe ser el origen.
-                                                     // Un waypoint esta definido como un objeto cualquiera en el mundo; el drón se dirige primero a la posición del primer waypoint de la lista y luego al próximo y así
-                                                     // sucesivamente hasta completar su recorrido. Idealmente, estos objetos no serán visibles por el usuario, ya que el drón chocaría con un objeto físico. En vez, es mejor
+    [Tooltip("Lista de objetos hacia donde el objeto se moverá. Idealmente Empty Game Objects.")]
+    [SerializeField] private GameObject[] waypoints; // Array de los waypoints que va a seguir el objeto. Debe haber mínimo uno que debe ser el origen.
+                                                     // Un waypoint esta definido como un objeto cualquiera en el mundo; el objeto con este script se dirige primero a la posición del primer waypoint de la lista y luego al próximo y así
+                                                     // sucesivamente hasta completar su recorrido. Idealmente, estos objetos waypoints no serán visibles por el usuario, ya que este objeto chocaría con un objeto físico. En vez, es mejor
                                                      // que los waypoints sean Empty Game Objects con un icono para que sea visible *solo* en la escena de edición, y que todos los waypoints se guarden bajo un mismo parent Game Object.
+                                                     // Mirar ejemplo del drón para ver como se podría estructurar un objeto que utilice este script de movimiento
 
     [Header("Movement Settings")]
-    [Tooltip("Repetir vuelo de drón al terminar el recorrido.")]
+    [Tooltip("Repetir recorrido de objeto al terminar el recorrido.")]
     public bool LoopTime;
 
-    [Tooltip("Curva personalizable para editar la velocidad del dron en su recorrido de un waypoint al proximo. Rango: (0, 10]")]
-    public AnimationCurve SpeedCurve; // Esta es una curva que se puede cambiar en el editor como sea necesario. Su dominio es [0, 1], por lo que cualquier punto fuera de estos no es considerado en la velocidad.
-                                      // Esta determina la velocidad del dron en un solo recorrido de un waypoint a otro, no en el recorrido completo de toda la lista de waypoints. Esto quiere decir que al principio
-                                      // del trayecto de un punto a otro, la velocidad del dron sera el punto 0 de la curva, y al llegar al destino su velocidad sera el punto 1 de la curva. Por eso, la curva debe siempre
-                                      // ser en todo momento mayor que cero, ya que si el dron se detiene en cualquier momento no sera capaz de continuar en la curva y se quedara quieto por siempre.
+    [Tooltip("Curva personalizable para editar la velocidad del objeto en su recorrido de un waypoint al proximo. Rango: (0, 10]")]
+    public AnimationCurve SpeedCurve; // Esta es una curva de Velocidad vs Posicion que se puede cambiar en el editor como sea necesario. Su dominio es [0, 1], por lo que cualquier punto fuera de estos no es considerado en la velocidad.
+                                      // Esta determina la velocidad del objeto en un solo recorrido de un waypoint a otro, no en el recorrido completo de toda la lista de waypoints. Esto quiere decir que al principio
+                                      // del trayecto de un punto a otro, la velocidad del objeto sera el punto 0 de la curva, y al llegar al destino su velocidad sera el punto 1 de la curva. Por eso, la curva debe siempre
+                                      // ser en todo momento mayor que cero, ya que si el objeto se detiene en cualquier momento no sera capaz de continuar en la curva y se quedara quieto por siempre.
 
     [Tooltip("Velocidad de rotacion para mirar al proximo punto")]
     [Range(0.0f, 5.0f)] public float RotateSpeed;
 
 
     [Header("Other Settings")]
-    [Tooltip("Tiempo de espera para comenzar vuelo hacia el proximo waypoint. Aqui sucede la rotacion en Y.")]
+    [Tooltip("Tiempo de espera para comenzar movimiento hacia el proximo waypoint. Aqui sucede la rotacion en Y.")]
     [Range(0.0f, 5.0f)] public float WaitTimeBetweenPoints; 
 
 
     private float currentSpeed; // Velocidad actual, proporcional al punto actual de la curva de velocidad.
     private float waypointProgress; // Progreso del recorrido del anterior waypoint hacia el proximo waypoint, este siendo un valor entre 0 y 1.
-    private Vector3 lastPosition; // Posicion del dron al llegar al anterior waypoint.
+    private Vector3 lastPosition; // Posicion del objeto al llegar al anterior waypoint. Se actualiza cada vez que llega a un nuevo waypoint.
     private int nextWaypointIndex; // El indice en el array del próximo waypoint.
-    private bool inMovement; // Bool que revisa si el dron esta en movimiento o no; se usa para decidir si ya llegó a su objetivo.
-    private bool inRotationY; // Bool que revisa si el dron esta rotando su eje X para apuntar al proximo waypoint.
+    private bool inMovement; // Bool que revisa si el objeto esta en movimiento o no; se usa para decidir si ya llegó a su objetivo.
+    private bool inRotationY; // Bool que revisa si el objeto esta rotando su eje X para apuntar al proximo waypoint.
 
     void Awake()
     {
-        if (waypoints.Length == 0) // Si no hay waypoints agregados al dron en el inspector, este script se borra para evitar errores.
+        if (waypoints.Length == 0) // Si no hay waypoints agregados al objeto en el inspector, este script se borra para evitar errores.
         {
-            Debug.Log($"El dron {gameObject.name} no tiene ningún waypoint de origen, se borró su script.");
+            Debug.Log($"El objeto {gameObject.name} no tiene ningún waypoint de origen, se borró su script.");
             Destroy(this);
         }
         else
         {
-            transform.position = waypoints[0].transform.position; // La posición inicial del drón siempre será la del primer waypoint, incluso si el drón esta en otro lugar.
+            transform.position = waypoints[0].transform.position; // La posición inicial del objeto siempre será la del primer waypoint, incluso si el objeto esta en otro lugar.
             UpdateGoal();
             if (waypoints.Length > 1)
             {
-               // transform.LookAt(waypoints[1].transform);
-               // transform.rotation = new Quaternion(0, transform.rotation.y, 0, transform.rotation.w);
+                Vector3 direction = waypoints[1].transform.position - transform.position;
+                direction.y = 0;
+                transform.rotation = Quaternion.LookRotation(direction);    // Revisar comentarios en RotateYaxis() para entender como sirve este codigo. Con esto, al inicializarse el objeto apuntara directamente a donde se mueve instantaneamente
+
                 inMovement = true;
             }
         }
@@ -70,7 +73,9 @@ public class DroneBehavior : MonoBehaviour
         }
 
         if (inRotationY)
+        {
             RotateYaxis();
+        }
     }
 
     void MoveDrone()
@@ -84,7 +89,7 @@ public class DroneBehavior : MonoBehaviour
 
         if (currentSpeed <= 0) // Revisa que la velocidad sea siempre mayor que cero para evitar errores
         {
-            Debug.Log($"La velocidad inicial del dron {gameObject.name} en la curva debe ser siempre mayor a cero, se borró su script.");
+            Debug.Log($"La velocidad inicial del objeto {gameObject.name} en la curva debe ser siempre mayor a cero, se borró su script.");
             Destroy(this);
         }
 
@@ -95,7 +100,7 @@ public class DroneBehavior : MonoBehaviour
     }
 
     
-    void RotateYaxis() //YA SIRVE LA FUNCION AAAAAAAA
+    void RotateYaxis()
     {
         GameObject nextWaypoint = waypoints[nextWaypointIndex];
         Transform target = nextWaypoint.transform;
@@ -105,8 +110,6 @@ public class DroneBehavior : MonoBehaviour
 
         Quaternion rotation = Quaternion.LookRotation(lookPos); // Nos define la direccion del proximo waypoint como un Quaternion
         transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * RotateSpeed); // Se translada a ese quaternion
-
-        //Debug.Log(Vector3.Dot(lookPos.normalized, transform.forward));
 
         if (Quaternion.Angle(transform.rotation, rotation) < 1f) // Revisa si el angulo ya esta lo suficientemente cerca (Quaternion.Slerp no llega completamente a su objetivo)
         {
