@@ -69,8 +69,8 @@ public class DroneBehavior : MonoBehaviour
             MoveDrone();
         }
 
-        //if (inRotationY)
-            //RotateYaxis();
+        if (inRotationY)
+            RotateYaxis();
     }
 
     void MoveDrone()
@@ -94,30 +94,26 @@ public class DroneBehavior : MonoBehaviour
              StartCoroutine(WaitForGoalUpdate());   // Si se llego ya al target waypoint, el objetivo se actualiza para el proximo waypoint, o se detiene el recorrido si se acabo la lista y no hay loop time.
     }
 
-    /*
-    void RotateYaxis() // TODO: ARREGLAR ESTA FUNCION NO SIRVE AAAAAAAAAA
+    
+    void RotateYaxis() //YA SIRVE LA FUNCION AAAAAAAA
     {
         GameObject nextWaypoint = waypoints[nextWaypointIndex];
         Transform target = nextWaypoint.transform;
 
-        TestWaypointBlocks(nextWaypoint, true); // Se supone que esto deberia mostrar fisicamente el proximo waypoint con un cubo
-
         Vector3 lookPos = target.position - transform.position; // Encuentra el vector que en teoria apuntaria al proximo waypoint
-        lookPos.y = 0; // Solo nos interesa la direccion en X
-        lookPos.z = 0;
+        lookPos.y = 0; // Solo nos interesa la rotacion en el eje Y, entonces no podemos permitir que los otros ejes roten para acomodar un vector fuera del dominio de Y
 
         Quaternion rotation = Quaternion.LookRotation(lookPos); // Nos define la direccion del proximo waypoint como un Quaternion
-        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * 2); // Se translada a ese quaternion
+        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.deltaTime * RotateSpeed); // Se translada a ese quaternion
 
         //Debug.Log(Vector3.Dot(lookPos.normalized, transform.forward));
 
-        if (Vector3.Dot(lookPos.normalized, transform.forward) > 0.99) // Revisa si ya llego a la direccion esperada. Por alguna razon con esta configuracion de dron, entre mas se acerca a la rotacion, el producto punto se convierte 1 y no 0,                                                                          probablemente hice algo mal jajan't
+        if (Quaternion.Angle(transform.rotation, rotation) < 1f) // Revisa si el angulo ya esta lo suficientemente cerca (Quaternion.Slerp no llega completamente a su objetivo)
         {
-            TestWaypointBlocks(nextWaypoint, false); // apaga la visualizacion del waypoint actual
             inRotationY = false;
         }
     }
-    */
+    
 
     private IEnumerator WaitForGoalUpdate()
     {
@@ -146,11 +142,5 @@ public class DroneBehavior : MonoBehaviour
 
         return true;
         
-    }
-
-    void TestWaypointBlocks(GameObject waypoint, bool enable)
-    {
-        if (waypoint.GetComponentInChildren<MeshRenderer>() != null)
-            waypoint.GetComponentInChildren<MeshRenderer>().enabled = enable;
     }
 }
