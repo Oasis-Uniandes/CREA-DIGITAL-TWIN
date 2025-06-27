@@ -1023,7 +1023,13 @@ PlayerSettings:
   XboxOneOverrideIdentityPublisher: 
   vrEditorSettings: {}
   cloudServicesEnabled:
+    Build: 0
+    Game Performance: 0
+    Legacy Analytics: 0
+    Purchasing: 0
+    UDP: 0
     UNet: 0
+    Unity Ads: 0
   luminIcon:
     m_Name: 
     m_ModelFolderPath: 
@@ -1043,11 +1049,11 @@ PlayerSettings:
   apiCompatibilityLevel: 6
   activeInputHandler: 1
   windowsGamepadBackendHint: 0
-  cloudProjectId: 95ad45b5-be4c-46e3-b2f8-8bd45543c6f7
+  cloudProjectId: 64a45532-f8b2-4c85-842e-45ed49e5cfd8
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: XR-Template
-  organizationId: julian27m
+  projectName: CREA Digital Twin
+  organizationId: juanes1516
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}
