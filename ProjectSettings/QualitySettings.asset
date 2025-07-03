@@ -281,6 +281,8 @@ QualitySettings:
     excludedTargetPlatforms:
     - Nintendo Switch
     - iPhone
+    - Standalone
+    - Server
   m_TextureMipmapLimitGroupNames: []
   m_PerPlatformDefaultQuality:
     Android: 4

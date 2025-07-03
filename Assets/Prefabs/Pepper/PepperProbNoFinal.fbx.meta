@@ -61,13 +61,6 @@ ModelImporter:
     optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
-    rigImportErrors: 
-    rigImportWarnings: "Avatar Rig Configuration mis-match. Bone length in configuration
-      does not match position in animation file:\n\t'CorazonDerechoMedioBajo' : position
-      error = 1.565868 mm\n\t'cabeza' : position error = 13.344124 mm\nAvatar Rig
-      Configuration mis-match. Inbetween bone rotation in configuration does not
-      match rotation in animation file:\n\t'BrazoIzquierdoInferior' : rotation error
-      = 8.068315 deg\n\t'cabeza2' : rotation error = 61.709106 deg\n"
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -86,7 +79,7 @@ ModelImporter:
   meshes:
     lODScreenPercentages: []
     globalScale: 1
-    meshCompression: 0
+    meshCompression: 2
     addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
